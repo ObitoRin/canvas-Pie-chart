@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid skyblue;
+        }
+    </style>
+</head>
+<body>
+<canvas width="600" height="400"></canvas>
+<script>
+  function PieChart() {
+    /*获取上下文*/
+    this.ctx = document.querySelector('canvas').getContext('2d');
+    /*获取画布宽高*/
+    this.width = this.ctx.canvas.width;
+    this.height = this.ctx.canvas.height;
+    /*圆心位置*/
+    this.x = this.width / 2 + 60;
+    this.y = this.height / 2;
+    /*半径*/
+    this.radius = 150;
+    /*伸出去的线的长度*/
+    this.outline = 20;
+    /*矩形的大小*/
+    this.rectW = 30;
+    this.rectH = 16;
+    /*矩形的间距*/
+    this.space = 20;
+
+  }
+
+  /*初始化*/
+  PieChart.prototype.init = function (data) {
+    this.drawPie(data);
+  };
+  /*画饼状图*/
+  PieChart.prototype.drawPie = function (data) {
+    var angleList = this.transformAngle(data);//转换后的数据
+    var startAngle = 0;//开始弧度
+    angleList.forEach(function (item, i) {
+      var endAngle = startAngle + item.angle;
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.x, this.y);
+      this.ctx.arc(this.x, this.y, 150, startAngle, endAngle);
+      var color = this.ctx.fillStyle = this.randomColor();
+      this.ctx.fill();
+      /*画线+标题*/
+      this.drawLine(startAngle, item.angle, color, item.title);
+      /*绘制矩形*/
+      this.drawRectangle(i, item.title);
+      startAngle = endAngle;
+    }.bind(this));
+
+  };
+  /*画线+标题*/
+  PieChart.prototype.drawLine = function (startAngle, angle, color, title) {
+    /*x-cos  y-sin */
+    var edge = this.radius + this.outline; //斜边
+    /*出去的点的坐标*/  /*使用弧度  当前扇形的起始弧度 + 对应的弧度的一半 */
+    var outX = this.x + Math.cos(startAngle + angle / 2) * edge;
+    var outY = this.y + Math.sin(startAngle + angle / 2) * edge;
+    /*出去的线*/
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.x, this.y);
+    this.ctx.lineTo(outX, outY);
+    this.ctx.strokeStyle = color;
+    this.ctx.stroke();
+
+    /*文字*/
+    this.ctx.font = '20px Microsoft YaHei';         //先设置字体大小,再获取文字的总宽度
+    var textWidth = this.ctx.measureText(title).width;//文字的总宽度
+    //横线  的方向
+    if (outX > this.x) {
+      this.ctx.lineTo(outX + textWidth, outY - 0.5);//长度是文字的宽度
+      this.ctx.textAlign = 'left';
+    } else {
+      //从outX开始画,画到outX - textWidth的位置结束
+      this.ctx.lineTo(outX - textWidth, outY - 0.5);//长度是文字的宽度
+      this.ctx.textAlign = 'right';
+    }
+    this.ctx.stroke();
+    this.ctx.textBaseline = 'bottom';
+    this.ctx.fillText(title, outX, outY);
+  };
+  /*绘制矩形*/
+  PieChart.prototype.drawRectangle = function (index, title) {
+    this.ctx.textAlign = 'left';
+    this.ctx.textBaseline = 'top';
+    this.ctx.fillRect(this.space, this.space + index * (this.rectH + 10), this.rectW, this.rectH);
+
+    this.ctx.font = '14px Microsoft YaHei';
+    this.ctx.fillText(title, this.space + this.rectW + 10, this.space + index * (this.rectH + 10));
+
+  };
+  /*转换数据*/
+  PieChart.prototype.transformAngle = function (data) {
+    var total = 0;//总数据
+    data.forEach(function (item) {
+      total += item.num;
+    });
+    /*计算弧度 并添加到当前对象中*/
+    data.forEach(function (item) {
+      var angle = Math.PI * 2 * (item.num / total);//转为canvas弧度
+      item.angle = angle;//添加一个属性,存放canvas弧度
+    });
+    return data;//返回数据
+
+  };
+
+  /*随机颜色*/
+  PieChart.prototype.randomColor = function () {
+    var r = Math.floor(Math.random() * 256);
+    var g = Math.floor(Math.random() * 256);
+    var b = Math.floor(Math.random() * 256);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  };
+  /*数据*/
+  var data = [
+    {
+      title: '15-20岁',
+      num: 6
+    },
+    {
+      title: '20-25岁',
+      num: 30
+    },
+    {
+      title: '25-30岁',
+      num: 10
+    },
+    {
+      title: '30以上',
+      num: 8
+    }
+  ];
+  var pieChart = new PieChart();
+  pieChart.init(data);
+</script>
+</body>
+</html>
